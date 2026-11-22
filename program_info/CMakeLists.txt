@@ -52,6 +52,8 @@ configure_file(${Launcher_APP_BINARY_NAME}.manifest.in ${Launcher_APP_BINARY_NAM
 configure_file(${Launcher_APP_BINARY_NAME}.ico ${Launcher_APP_BINARY_NAME}.ico COPYONLY)
 configure_file(${Launcher_SVGFileName} ${Launcher_SVGFileName} COPYONLY)
 configure_file(${Launcher_AppID}.mime.xml ${Launcher_AppID}.xml COPYONLY)
+configure_file(nsis_sidebar.bmp nsis_sidebar.bmp COPYONLY)
+configure_file(nsis_header.bmp nsis_header.bmp COPYONLY)
 
 if(MSVC)
     set(Launcher_MSVC_Redist_NSIS_Section [=[

@@ -14,6 +14,13 @@ RequestExecutionLevel user
 OutFile "../@Launcher_CommonName@-Setup.exe"
 
 !define MUI_ICON "../@Launcher_Branding_ICO@"
+!define MUI_UNICON "../@Launcher_Branding_ICO@"
+
+; Custom PakClient branding bitmaps
+!define MUI_WELCOMEFINISHPAGE_BITMAP "nsis_sidebar.bmp"
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP "nsis_header.bmp"
+!define MUI_HEADERIMAGE_RIGHT
 
 !define UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\@Launcher_CommonName@"
 
