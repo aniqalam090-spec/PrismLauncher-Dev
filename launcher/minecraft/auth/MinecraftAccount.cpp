@@ -78,6 +78,7 @@ MinecraftAccountPtr MinecraftAccount::createOffline(const QString& username)
 {
     auto account = makeShared<MinecraftAccount>();
     account->data.type = AccountType::Offline;
+    account->data.accountState = AccountState::Offline;
     account->data.yggdrasilToken.token = "0";
     account->data.yggdrasilToken.validity = Validity::Certain;
     account->data.yggdrasilToken.issueInstant = QDateTime::currentDateTimeUtc();
@@ -86,6 +87,10 @@ MinecraftAccountPtr MinecraftAccount::createOffline(const QString& username)
     account->data.minecraftProfile.id = uuidFromUsername(username).toString(QUuid::Id128);
     account->data.minecraftProfile.name = username;
     account->data.minecraftProfile.validity = Validity::Certain;
+    account->data.minecraftEntitlement.canPlayMinecraft = true;
+    account->data.minecraftEntitlement.ownsMinecraft = true;
+    account->data.minecraftEntitlement.validity = Validity::Certain;
+    account->data.validity_ = Validity::Certain;
     return account;
 }
 
@@ -206,6 +211,9 @@ bool MinecraftAccount::isActive() const
 
 bool MinecraftAccount::shouldRefresh() const
 {
+    if (data.type == AccountType::Offline) {
+        return false;
+    }
     /*
      * Never refresh accounts that are being used by the game, it breaks the game session.
      * Always refresh accounts that have not been refreshed yet during this session.
@@ -242,7 +250,7 @@ bool MinecraftAccount::shouldRefresh() const
 void MinecraftAccount::fillSession(AuthSessionPtr session)
 {
     // volatile auth token
-    session->access_token = data.accessToken();
+    session->access_token = data.accessToken().isEmpty() ? "0" : data.accessToken();
     // profile name
     session->player_name = data.profileName();
     // profile ID
@@ -251,7 +259,10 @@ void MinecraftAccount::fillSession(AuthSessionPtr session)
         session->uuid = uuidFromUsername(session->player_name).toString(QUuid::Id128);
     // 'legacy' or 'mojang', depending on account type
     session->user_type = typeString();
-    if (!session->access_token.isEmpty()) {
+    if (data.type == AccountType::Offline) {
+        session->session = "-";
+        session->access_token = "0";
+    } else if (!session->access_token.isEmpty()) {
         session->session = "token:" + data.accessToken() + ":" + data.profileId();
     } else {
         session->session = "-";

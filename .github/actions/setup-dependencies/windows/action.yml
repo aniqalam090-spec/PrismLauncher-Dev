@@ -34,7 +34,8 @@ runs:
         java-version: 17
 
     - name: Setup vcpkg cache (MSVC)
-      if: ${{ inputs.msystem == '' && inputs.build-type == 'Debug' }}
+      if: ${{ github.repository_owner == 'PrismLauncher' && inputs.msystem == '' && inputs.build-type == 'Debug' }}
+      continue-on-error: true
       shell: pwsh
       env:
         USERNAME: ${{ github.repository_owner }}

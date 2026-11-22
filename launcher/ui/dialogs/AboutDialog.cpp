@@ -90,7 +90,8 @@ AboutDialog::AboutDialog(QWidget* parent) : QDialog(parent), ui(new Ui::AboutDia
     ui->urlLabel->setOpenExternalLinks(true);
 
     ui->icon->setPixmap(APPLICATION->logo().pixmap(64));
-    ui->title->setText(launcherName);
+    ui->title->setText(tr("%1 by Aniq Alam").arg(launcherName));
+    ui->aboutLabel->setText(tr("<html><head/><body><p><b>PakClient</b> created by <b>Aniq Alam</b>.</p><p>A fast, custom launcher for Minecraft with sleek glassmorphism and offline account support.</p></body></html>"));
 
     ui->versionLabel->setText(BuildConfig.printableVersionString());
 

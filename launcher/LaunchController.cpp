@@ -96,8 +96,7 @@ void LaunchController::decideAccount()
     if (!accounts->anyAccountIsValid()) {
         // Tell the user they need to log in at least one account in order to play.
         auto reply = CustomMessageBox::selectable(m_parentWidget, tr("No Accounts"),
-                                                  tr("In order to play Minecraft, you must have at least one Microsoft "
-                                                     "account which owns Minecraft logged in. "
+                                                  tr("In order to play Minecraft, you must have an account added. "
                                                      "Would you like to open the account manager to add an account now?"),
                                                   QMessageBox::Information, QMessageBox::Yes | QMessageBox::No)
                          ->exec();
@@ -132,6 +131,11 @@ LaunchDecision LaunchController::decideLaunchMode()
 {
     if (!m_accountToUse || m_wantedLaunchMode == LaunchMode::Demo) {
         m_actualLaunchMode = LaunchMode::Demo;
+        return LaunchDecision::Continue;
+    }
+
+    if (m_accountToUse->accountType() == AccountType::Offline) {
+        m_actualLaunchMode = LaunchMode::Offline;
         return LaunchDecision::Continue;
     }
 
@@ -329,6 +333,16 @@ void LaunchController::login()
                 }
             }
             m_session->MakeOffline(name);
+        }
+    } else {
+        m_session->launchMode = LaunchMode::Offline;
+        m_session->access_token = "0";
+        m_session->session = "-";
+        if (m_session->player_name.isEmpty()) {
+            m_session->player_name = m_accountToUse->profileName();
+        }
+        if (m_session->uuid.isEmpty()) {
+            m_session->uuid = MinecraftAccount::uuidFromUsername(m_session->player_name).toString(QUuid::Id128);
         }
     }
 

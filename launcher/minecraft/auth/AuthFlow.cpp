@@ -97,7 +97,7 @@ bool AuthFlow::changeState(AccountTaskState newState, QString reason)
         }
         case AccountTaskState::STATE_SUCCEEDED: {
             setStatus(tr("Authentication task succeeded."));
-            m_data->accountState = AccountState::Online;
+            m_data->accountState = (m_data->type == AccountType::Offline) ? AccountState::Offline : AccountState::Online;
             emitSucceeded();
             return false;
         }

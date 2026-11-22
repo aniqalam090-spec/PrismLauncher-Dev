@@ -321,6 +321,11 @@ bool AccountData::resumeStateFromV3(QJsonObject data)
     }
 
     validity_ = minecraftProfile.validity;
+    if (type == AccountType::Offline) {
+        accountState = AccountState::Offline;
+        minecraftEntitlement.canPlayMinecraft = true;
+        minecraftEntitlement.ownsMinecraft = true;
+    }
     return true;
 }
 
