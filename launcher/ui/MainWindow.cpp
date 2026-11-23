@@ -262,6 +262,8 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     // add the toolbar toggles to the view menu
     ui->viewMenu->addAction(ui->instanceToolBar->toggleViewAction());
     ui->viewMenu->addAction(ui->newsToolBar->toggleViewAction());
+    ui->newsToolBar->setVisible(false);
+    ui->actionCAT->setVisible(false);
 
     updateThemeMenu();
     updateMainToolBar();

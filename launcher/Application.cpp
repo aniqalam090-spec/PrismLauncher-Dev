@@ -744,13 +744,13 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting({ "ProxyUser", "ProxyUsername" }, "");
         m_settings->registerSetting({ "ProxyPass", "ProxyPassword" }, "");
 
-        // Memory
-        m_settings->registerSetting({ "MinMemAlloc", "MinMemoryAlloc" }, 512);
+        // Memory - PakClient Optimized Defaults
+        m_settings->registerSetting({ "MinMemAlloc", "MinMemoryAlloc" }, 1024);
         m_settings->registerSetting({ "MaxMemAlloc", "MaxMemoryAlloc" }, SysInfo::defaultMaxJvmMem());
         m_settings->registerSetting("PermGen", 128);
         m_settings->registerSetting("LowMemWarning", true);
 
-        // Java Settings
+        // Java Settings - PakClient In-Game FPS Boost Defaults
         m_settings->registerSetting("JavaPath", "");
         m_settings->registerSetting("JavaSignature", "");
         m_settings->registerSetting("JavaArchitecture", "");
@@ -759,7 +759,7 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("JavaVendor", "");
         m_settings->registerSetting("LastHostname", "");
         m_settings->registerSetting("PinnedJavaPaths", "{}");
-        m_settings->registerSetting("JvmArgs", "");
+        m_settings->registerSetting("JvmArgs", "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch");
         m_settings->registerSetting("IgnoreJavaCompatibility", false);
         m_settings->registerSetting("IgnoreJavaWizard", false);
         auto defaultEnableAutoJava = m_settings->get("JavaPath").toString().isEmpty();
@@ -1928,7 +1928,11 @@ QString Application::getMSAClientID()
         return clientIDOverride;
     }
 
-    return BuildConfig.MSA_CLIENT_ID;
+    if (!BuildConfig.MSA_CLIENT_ID.isEmpty()) {
+        return BuildConfig.MSA_CLIENT_ID;
+    }
+
+    return QStringLiteral("c36a9fb6-4f2a-41ff-90bd-ae7cc92031eb");
 }
 
 QString Application::getFlameAPIKey()

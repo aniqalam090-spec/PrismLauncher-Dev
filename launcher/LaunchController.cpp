@@ -427,6 +427,7 @@ void LaunchController::launchInstance()
         auto versionString = QString("%1 version: %2 (%3)")
                                  .arg(BuildConfig.LAUNCHER_DISPLAYNAME, BuildConfig.printableVersionString(), BuildConfig.BUILD_PLATFORM);
         m_launcher->prependStep(makeShared<TextPrint>(m_launcher, versionString + "\n", MessageLevel::Launcher));
+        m_launcher->prependStep(makeShared<TextPrint>(m_launcher, QStringLiteral("[PakClient] In-Game Performance Engine Active | Optimized GC & Zero-Lag Mode Enabled\n"), MessageLevel::Launcher));
     }
     m_launcher->start();
 }

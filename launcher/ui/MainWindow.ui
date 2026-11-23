@@ -285,10 +285,10 @@
     <iconset theme="new"/>
    </property>
    <property name="text">
-    <string>Add Instanc&amp;e...</string>
+    <string>➕ New Instance</string>
    </property>
    <property name="toolTip">
-    <string>Add a new instance.</string>
+    <string>Create a new Minecraft instance</string>
    </property>
   </action>
   <action name="actionCheckUpdate">
@@ -296,10 +296,10 @@
     <iconset theme="checkupdate"/>
    </property>
    <property name="text">
-    <string>&amp;Update...</string>
+    <string>🔄 Updates</string>
    </property>
    <property name="toolTip">
-    <string>Check for new updates for %1.</string>
+    <string>Check for PakClient updates.</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::ApplicationSpecificRole</enum>
@@ -340,10 +340,10 @@
     <iconset theme="launch"/>
    </property>
    <property name="text">
-    <string>&amp;Launch</string>
+    <string>⚡ Play Game</string>
    </property>
    <property name="toolTip">
-    <string>Launch the selected instance.</string>
+    <string>Launch the selected instance with PakClient optimizations.</string>
    </property>
   </action>
   <action name="actionKillInstance">
@@ -351,10 +351,10 @@
     <iconset theme="status-bad"/>
    </property>
    <property name="text">
-    <string>&amp;Kill</string>
+    <string>🛑 Stop Game</string>
    </property>
    <property name="toolTip">
-    <string>Kill the running instance.</string>
+    <string>Stop the running instance.</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+K</string>
@@ -398,7 +398,7 @@
     <iconset theme="settings"/>
    </property>
    <property name="text">
-    <string>&amp;Edit...</string>
+    <string>🛠️ Edit Instance</string>
    </property>
    <property name="toolTip">
     <string>Change the instance settings, mods and versions.</string>
