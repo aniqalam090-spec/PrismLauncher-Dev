@@ -156,32 +156,62 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
     setAccessibleName(BuildConfig.LAUNCHER_DISPLAYNAME);
 #endif
 
-    // instance toolbar stuff
+    // PakClient Left Navigation Rail setup
+    {
+        ui->mainToolBar->setMinimumWidth(195);
+        ui->mainToolBar->setMaximumWidth(220);
+
+        auto* brandWidget = new QWidget(this);
+        brandWidget->setObjectName("pakclientBrandWidget");
+        auto* brandLayout = new QHBoxLayout(brandWidget);
+        brandLayout->setContentsMargins(10, 14, 10, 14);
+        brandLayout->setSpacing(10);
+
+        auto* brandLogo = new QLabel(brandWidget);
+        brandLogo->setPixmap(APPLICATION->logo().pixmap(36, 36));
+        brandLogo->setFixedSize(36, 36);
+        brandLayout->addWidget(brandLogo);
+
+        auto* titleLayout = new QVBoxLayout();
+        titleLayout->setSpacing(1);
+        auto* brandTitle = new QLabel("PakClient", brandWidget);
+        brandTitle->setStyleSheet("font-size: 15px; font-weight: 800; color: #00ff6a; letter-spacing: 0.5px;");
+        auto* brandSubtitle = new QLabel("by Aniq Alam", brandWidget);
+        brandSubtitle->setStyleSheet("font-size: 10px; color: #7ba885; font-weight: 600;");
+        titleLayout->addWidget(brandTitle);
+        titleLayout->addWidget(brandSubtitle);
+        brandLayout->addLayout(titleLayout);
+
+        ui->mainToolBar->insertWidget(ui->actionAddInstance, brandWidget);
+        ui->mainToolBar->insertSeparator(ui->actionAddInstance);
+    }
+
+    // PakClient Bottom Launch Dock
     {
         connect(ui->instanceToolBar, &QToolBar::orientationChanged, this, &MainWindow::updateInstanceToolBarOrientation);
+        ui->instanceToolBar->setMinimumHeight(64);
 
-        // FIXME: why doesn't this work when done in the UI file?
-        ui->instanceToolBar->setMinimumWidth(140);
-
-        // if you try to add a widget to a toolbar in a .ui file
-        // qt designer will delete it when you save the file >:(
-        // HACK: the toolbar interferes with the sizing for some reason
         auto* infoWidget = new QWidget(this);
-        auto* infoLayout = new QVBoxLayout(infoWidget);
-        infoLayout->setContentsMargins(2, 0, 2, 0);
+        infoWidget->setObjectName("pakclientInstanceInfoDock");
+        auto* infoLayout = new QHBoxLayout(infoWidget);
+        infoLayout->setContentsMargins(8, 4, 16, 4);
+        infoLayout->setSpacing(10);
 
         m_changeIconButton = new QToolButton(infoWidget);
         m_changeIconButton->setObjectName(QStringLiteral("changeIconButton"));
-        m_changeIconButton->setIconSize({ ui->instanceToolBar->minimumWidth(), 80 });
+        m_changeIconButton->setIconSize({ 40, 40 });
         m_changeIconButton->setAutoRaise(true);
         updateInstanceToolIcon("default");
-        m_changeIconButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        m_changeIconButton->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         connect(m_changeIconButton, &QToolButton::clicked, this, &MainWindow::on_actionChangeInstIcon_triggered);
         infoLayout->addWidget(m_changeIconButton);
 
+        auto* nameBox = new QVBoxLayout();
+        nameBox->setSpacing(1);
         m_nameLabel = new EditableLabel(infoWidget);
         m_nameLabel->setObjectName(QStringLiteral("nameLabel"));
         m_nameLabel->setText(tr("No Instance Selected"));
+        m_nameLabel->setStyleSheet("font-size: 14px; font-weight: 700; color: #00ff6a;");
         connect(m_nameLabel, &EditableLabel::textChanged, this, [this](const QString& newName) {
             if (m_selectedInstance == nullptr) {
                 return;
@@ -197,13 +227,17 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
             handleInstanceRename(oldName, m_selectedInstance->name());
             m_nameLabel->setText(m_selectedInstance->name());
         });
-
-        infoLayout->addWidget(m_nameLabel);
+        nameBox->addWidget(m_nameLabel);
+        infoLayout->addLayout(nameBox);
 
         m_instanceInfoWidget = ui->instanceToolBar->insertWidgetBefore(ui->actionLaunchInstance, infoWidget);
         Q_ASSERT(m_instanceInfoWidget != nullptr);
 
         m_instanceToolBarTopSeparator = ui->instanceToolBar->insertSeparator(ui->actionLaunchInstance);
+
+        auto* dockSpacer = new QWidget(this);
+        dockSpacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        ui->instanceToolBar->insertWidgetBefore(ui->actionLaunchInstance, dockSpacer);
     }
 
     // set the menu for the folders help, accounts, and export tool buttons
@@ -261,8 +295,6 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // add the toolbar toggles to the view menu
     ui->viewMenu->addAction(ui->instanceToolBar->toggleViewAction());
-    ui->viewMenu->addAction(ui->newsToolBar->toggleViewAction());
-    ui->newsToolBar->setVisible(false);
     ui->actionCAT->setVisible(false);
 
     updateThemeMenu();
@@ -291,19 +323,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         connect(secretEventFilter, &KonamiCode::triggered, this, &MainWindow::konamiTriggered);
     }
 
-    // Add the news label to the news toolbar.
+    // News service (background only)
     {
         m_newsChecker.reset(new NewsChecker(APPLICATION->network(), BuildConfig.NEWS_RSS_URL));
-        newsLabel = new QToolButton();
-        newsLabel->setIcon(QIcon::fromTheme("news"));
-        newsLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        newsLabel->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        newsLabel->setFocusPolicy(Qt::NoFocus);
-        ui->newsToolBar->insertWidget(ui->actionMoreNews, newsLabel);
-
-        connect(newsLabel, &QAbstractButton::clicked, this, &MainWindow::newsButtonClicked);
         connect(m_newsChecker.get(), &NewsChecker::newsLoaded, this, &MainWindow::updateNewsLabel);
-        updateNewsLabel();
     }
 
     // Create the instance list widget
@@ -335,14 +358,10 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWi
         connect(view, &InstanceView::groupStateChanged, APPLICATION->instances(), &InstanceList::on_GroupStateChanged);
         ui->horizontalLayout->addWidget(view);
     }
-    // The cat background
+    // Cat Easter egg disabled
     {
-        // set the cat action priority here so you can still see the action in qt designer
-        ui->actionCAT->setPriority(QAction::LowPriority);
-        m_catSeparator = ui->mainToolBar->insertSeparator(ui->actionCAT);
+        ui->actionCAT->setVisible(false);
         updateCatState();
-        connect(ui->actionCAT, &QAction::toggled, this, &MainWindow::onCatToggled);
-        connect(APPLICATION, &Application::currentCatChanged, this, &MainWindow::onCatChanged);
     }
 
     // Togglable status bar
@@ -498,7 +517,6 @@ void MainWindow::lockToolbars(bool state)
 {
     ui->mainToolBar->setMovable(!state);
     ui->instanceToolBar->setMovable(!state);
-    ui->newsToolBar->setMovable(!state);
     APPLICATION->settings()->set("ToolbarsLocked", state);
 }
 
@@ -512,14 +530,12 @@ void MainWindow::konamiTriggered()
         ui->mainToolBar->setStyleSheet("");
         ui->instanceToolBar->setStyleSheet("");
         ui->centralWidget->setStyleSheet("");
-        ui->newsToolBar->setStyleSheet("");
         ui->statusBar->setStyleSheet("");
         qDebug() << "Super Secret Mode DEACTIVATED!";
     } else {
         ui->mainToolBar->setStyleSheet(stylesheet);
         ui->instanceToolBar->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:0, y2:1," + gradient);
         ui->centralWidget->setStyleSheet("background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:1," + gradient);
-        ui->newsToolBar->setStyleSheet(stylesheet);
         ui->statusBar->setStyleSheet(stylesheet);
         qDebug() << "Super Secret Mode ACTIVATED!";
     }
@@ -807,6 +823,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* ev)
 
 void MainWindow::updateNewsLabel()
 {
+    if (!newsLabel || !m_newsChecker) {
+        return;
+    }
     if (m_newsChecker->isLoadingNews()) {
         newsLabel->setText(tr("Loading news..."));
         newsLabel->setEnabled(false);
@@ -825,32 +844,25 @@ void MainWindow::updateNewsLabel()
     }
 }
 
-void MainWindow::onCatToggled(bool state)
+void MainWindow::onCatToggled([[maybe_unused]] bool state)
 {
-    setCatBackground(state);
-    APPLICATION->settings()->set("TheCat", state);
+    setCatBackground(false);
+    APPLICATION->settings()->set("TheCat", false);
 }
 
-void MainWindow::setCatBackground(bool enabled)
+void MainWindow::setCatBackground([[maybe_unused]] bool enabled)
 {
-    view->setPaintCat(enabled);
+    view->setPaintCat(false);
     view->viewport()->repaint();
 }
 
 void MainWindow::updateCatState()
 {
-    SettingsObject* settings = APPLICATION->settings();
-    const bool catEnabled = settings->get("EnableCat").toBool();
-    bool catVisible = settings->get("TheCat").toBool();
-    if (!catEnabled && catVisible) {
-        settings->set("TheCat", false);
-        catVisible = false;
+    ui->actionCAT->setVisible(false);
+    if (m_catSeparator) {
+        m_catSeparator->setVisible(false);
     }
-
-    ui->actionCAT->setVisible(catEnabled);
-    m_catSeparator->setVisible(catEnabled);
-    ui->actionCAT->setChecked(catVisible);
-    setCatBackground(catVisible);
+    setCatBackground(false);
 }
 
 void MainWindow::runModalTask(Task* task)
@@ -1830,18 +1842,12 @@ void MainWindow::refreshCurrentInstance()
     instanceChanged(current, current);
 }
 
-void MainWindow::updateInstanceToolBarOrientation(Qt::Orientation orientation)
+void MainWindow::updateInstanceToolBarOrientation([[maybe_unused]] Qt::Orientation orientation)
 {
     ui->instanceToolBar->removeAction(ui->actionRenameInstance);
     ui->instanceToolBar->removeAction(ui->actionChangeInstIcon);
 
-    if (orientation == Qt::Vertical) {
-        m_instanceInfoWidget->setVisible(true);
-    } else {
-        m_instanceInfoWidget->setVisible(false);
-        ui->instanceToolBar->insertActionBefore(m_instanceToolBarTopSeparator, ui->actionRenameInstance);
-        ui->instanceToolBar->insertActionBefore(m_instanceToolBarTopSeparator, ui->actionChangeInstIcon);
-    }
+    m_instanceInfoWidget->setVisible(true);
     // HACK: sync size (no, I don't know why this works)
     ui->instanceToolBar->resize(0, 0);
 }

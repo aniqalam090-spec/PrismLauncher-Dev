@@ -71,13 +71,29 @@ ListViewDelegate::ListViewDelegate(QObject* parent) : QStyledItemDelegate(parent
 
 void drawSelectionRect(QPainter* painter, const QStyleOptionViewItem& option, const QRect& rect)
 {
-    if ((option.state & QStyle::State_Selected))
-        painter->fillRect(rect, option.palette.brush(QPalette::Highlight));
-    else {
-        QColor backgroundColor = option.palette.color(QPalette::Window);
-        backgroundColor.setAlpha(160);
-        painter->fillRect(rect, QBrush(backgroundColor));
+    painter->save();
+    painter->setRenderHint(QPainter::Antialiasing, true);
+
+    const QRect cardRect = rect.adjusted(3, 3, -3, -3);
+
+    if (option.state & QStyle::State_Selected) {
+        // Selected card: glowing neon emerald border & glass fill
+        painter->setPen(QPen(QColor(0, 255, 106, 230), 2.0));
+        painter->setBrush(QColor(0, 255, 106, 50));
+        painter->drawRoundedRect(cardRect, 10.0, 10.0);
+    } else if (option.state & QStyle::State_MouseOver) {
+        // Hover card: subtle glow border
+        painter->setPen(QPen(QColor(0, 255, 106, 130), 1.5));
+        painter->setBrush(QColor(2, 28, 12, 160));
+        painter->drawRoundedRect(cardRect, 10.0, 10.0);
+    } else {
+        // Normal card: dark semi-transparent glass with soft border
+        painter->setPen(QPen(QColor(0, 255, 106, 30), 1.0));
+        painter->setBrush(QColor(2, 16, 7, 130));
+        painter->drawRoundedRect(cardRect, 10.0, 10.0);
     }
+
+    painter->restore();
 }
 
 void drawBadges(QPainter* painter, const QStyleOptionViewItem& option, BaseInstance* instance, QIcon::Mode mode, QIcon::State state)
@@ -144,18 +160,20 @@ void ListViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opti
 
     QStyle* style = opt.widget ? opt.widget->style() : QApplication::style();
 
+    painter->setRenderHint(QPainter::Antialiasing, true);
+
+    // Draw the whole item as a modern game card!
+    drawSelectionRect(painter, opt, opt.rect);
+
     const int iconSize = 48;
     QRect iconbox = opt.rect;
     const int textMargin = style->pixelMetric(QStyle::PM_FocusFrameHMargin, 0, opt.widget) + 1;
     QRect textRect = opt.rect;
-    QRect textHighlightRect = textRect;
-    // clip the decoration on top, remove width padding
-    textRect.adjust(textMargin, iconSize + textMargin + 5, -textMargin, 0);
 
-    textHighlightRect.adjust(0, iconSize + 5, 0, 0);
-
-    // draw background
-    drawSelectionRect(painter, opt, textHighlightRect);
+    // Top icon area padded by 8px, text below
+    iconbox.setTop(opt.rect.top() + 8);
+    iconbox.setHeight(iconSize);
+    textRect.adjust(textMargin, iconSize + 12, -textMargin, -4);
 
     // icon mode and state, also used for badges
     QIcon::Mode mode = QIcon::Normal;
@@ -167,17 +185,14 @@ void ListViewDelegate::paint(QPainter* painter, const QStyleOptionViewItem& opti
 
     // draw the icon
     {
-        iconbox.setHeight(iconSize);
         opt.icon.paint(painter, iconbox, Qt::AlignCenter, mode, state);
     }
-    // set the text colors
-    QPalette::ColorGroup cg = opt.state & QStyle::State_Enabled ? QPalette::Normal : QPalette::Disabled;
-    if (cg == QPalette::Normal && !(opt.state & QStyle::State_Active))
-        cg = QPalette::Inactive;
+
+    // High contrast modern text colors
     if (opt.state & QStyle::State_Selected) {
-        painter->setPen(opt.palette.color(cg, QPalette::HighlightedText));
+        painter->setPen(QColor(255, 255, 255));
     } else {
-        painter->setPen(opt.palette.color(cg, QPalette::Text));
+        painter->setPen(QColor(220, 245, 225));
     }
 
     // draw the text
@@ -226,7 +241,7 @@ QSize ListViewDelegate::sizeHint(const QStyleOptionViewItem& option, const QMode
     QSize szz = viewItemTextSize(&opt);
     height += szz.height();
     // FIXME: maybe the icon items could scale and keep proportions?
-    QSize sz(100, height);
+    QSize sz(108, height + 10);
     return sz;
 }
 

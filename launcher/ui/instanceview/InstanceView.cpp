@@ -44,6 +44,8 @@
 #include <QMimeData>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
+#include <QRadialGradient>
 #include <QPersistentModelIndex>
 #include <QScrollBar>
 #include <QtMath>
@@ -61,7 +63,7 @@ InstanceView::InstanceView(QWidget* parent) : QAbstractItemView(parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setAcceptDrops(true);
     setAutoScroll(true);
-    setPaintCat(APPLICATION->settings()->get("TheCat").toBool());
+    setPaintCat(false);
     connect(verticalScrollBar(), &QScrollBar::valueChanged, viewport(), QOverload<>::of(&QWidget::update));
     connect(horizontalScrollBar(), &QScrollBar::valueChanged, viewport(), QOverload<>::of(&QWidget::update));
 }
@@ -429,16 +431,12 @@ void InstanceView::mouseDoubleClickEvent(QMouseEvent* event)
     }
 }
 
-void InstanceView::setPaintCat(bool visible)
+void InstanceView::setPaintCat([[maybe_unused]] bool visible)
 {
     if (m_cat) {
         disconnect(m_cat, &CatPainter::updateFrame, this, nullptr);
         delete m_cat;
         m_cat = nullptr;
-    }
-    if (visible) {
-        m_cat = new CatPainter(APPLICATION->themeManager()->getCatPack(), this);
-        connect(m_cat, &CatPainter::updateFrame, this, [this] { viewport()->update(); });
     }
 }
 
@@ -447,9 +445,70 @@ void InstanceView::paintEvent([[maybe_unused]] QPaintEvent* event)
     executeDelayedItemsLayout();
 
     QPainter painter(this->viewport());
+    painter.setRenderHint(QPainter::Antialiasing, true);
 
-    if (m_cat) {
-        m_cat->paint(&painter, this->viewport()->rect());
+    const QRect vpRect = this->viewport()->rect();
+
+    // 1. Draw subtle ambient cyber radial glow
+    {
+        const int maxDim = qMax(vpRect.width(), vpRect.height());
+        QRadialGradient ambientGlow(vpRect.center(), maxDim * 0.7);
+        ambientGlow.setColorAt(0.0, QColor(0, 255, 136, 18));
+        ambientGlow.setColorAt(0.5, QColor(0, 180, 80, 8));
+        ambientGlow.setColorAt(1.0, QColor(0, 0, 0, 0));
+        painter.fillRect(vpRect, ambientGlow);
+    }
+
+    // 2. Draw PakClient Pakistan Crescent and 5-Pointed Star Watermark
+    {
+        painter.save();
+        const qreal emblemSize = qMin(vpRect.width(), vpRect.height()) * 0.40;
+        const qreal r = qBound(70.0, emblemSize, 180.0);
+        const QPointF center(vpRect.width() - r * 1.30, vpRect.height() - r * 1.25);
+
+        painter.translate(center);
+        painter.rotate(-25.0);
+
+        // Crescent moon
+        QPainterPath outerMoon;
+        outerMoon.addEllipse(QPointF(0, 0), r, r);
+
+        QPainterPath innerCut;
+        innerCut.addEllipse(QPointF(r * 0.35, -r * 0.15), r * 0.88, r * 0.88);
+
+        QPainterPath crescent = outerMoon.subtracted(innerCut);
+
+        // Five-pointed star
+        QPainterPath star;
+        const qreal starRadiusOuter = r * 0.38;
+        const qreal starRadiusInner = starRadiusOuter * 0.40;
+        const QPointF starCenter(r * 0.42, -r * 0.35);
+
+        for (int i = 0; i < 5; ++i) {
+            const qreal outerAngle = -M_PI / 2.0 + i * (2.0 * M_PI / 5.0);
+            const qreal innerAngle = outerAngle + M_PI / 5.0;
+
+            const QPointF pOuter = starCenter + QPointF(starRadiusOuter * cos(outerAngle), starRadiusOuter * sin(outerAngle));
+            const QPointF pInner = starCenter + QPointF(starRadiusInner * cos(innerAngle), starRadiusInner * sin(innerAngle));
+
+            if (i == 0) {
+                star.moveTo(pOuter);
+            } else {
+                star.lineTo(pOuter);
+            }
+            star.lineTo(pInner);
+        }
+        star.closeSubpath();
+
+        painter.setPen(QPen(QColor(0, 255, 136, 45), 2.0));
+        painter.setBrush(QColor(0, 255, 136, 16));
+        painter.drawPath(crescent);
+
+        painter.setPen(QPen(QColor(57, 255, 20, 55), 1.5));
+        painter.setBrush(QColor(0, 255, 136, 22));
+        painter.drawPath(star);
+
+        painter.restore();
     }
 
     QStyleOptionViewItem option;
@@ -458,41 +517,42 @@ void InstanceView::paintEvent([[maybe_unused]] QPaintEvent* event)
 
     if (model()->rowCount() == 0) {
         painter.save();
-        QString emptyString = tr("Welcome!") + "\n" + tr("Click \"Add Instance\" to get started.");
-
-        // calculate the rect for the overlay
         painter.setRenderHint(QPainter::Antialiasing, true);
-        QFont font("sans", 20);
-        font.setBold(true);
 
         QRect bounds = viewport()->geometry();
         bounds.moveTop(0);
-        auto innerBounds = bounds;
-        innerBounds.adjust(10, 10, -10, -10);
 
-        QColor background = QApplication::palette().color(QPalette::WindowText);
-        QColor foreground = QApplication::palette().color(QPalette::Base);
-        foreground.setAlpha(190);
-        painter.setFont(font);
-        auto fontMetrics = painter.fontMetrics();
-        auto textRect = fontMetrics.boundingRect(innerBounds, Qt::AlignHCenter | Qt::TextWordWrap, emptyString);
-        textRect.moveCenter(bounds.center());
+        const int cardW = qMin(460, bounds.width() - 40);
+        const int cardH = 170;
+        QRect cardRect((bounds.width() - cardW) / 2, (bounds.height() - cardH) / 2, cardW, cardH);
 
-        auto wrapRect = textRect;
-        wrapRect.adjust(-10, -10, 10, 10);
+        // Glass Welcome Card
+        painter.setPen(QPen(QColor(0, 255, 136, 120), 1.5));
+        painter.setBrush(QColor(3, 24, 11, 200));
+        painter.drawRoundedRect(cardRect, 14.0, 14.0);
 
-        // check if we are allowed to draw in our area
-        if (!event->rect().intersects(wrapRect)) {
-            return;
-        }
+        // Header Title
+        QFont titleFont("sans", 16);
+        titleFont.setBold(true);
+        painter.setFont(titleFont);
+        painter.setPen(QColor(0, 255, 136));
+        QRect titleRect(cardRect.left(), cardRect.top() + 24, cardRect.width(), 32);
+        painter.drawText(titleRect, Qt::AlignHCenter, tr("Welcome to PakClient"));
 
-        painter.setBrush(QBrush(background));
-        painter.setPen(foreground);
-        painter.drawRoundedRect(wrapRect, 5.0, 5.0);
+        // Subtitle
+        QFont subFont("sans", 11);
+        painter.setFont(subFont);
+        painter.setPen(QColor(220, 245, 225));
+        QRect subRect(cardRect.left() + 20, cardRect.top() + 64, cardRect.width() - 40, 26);
+        painter.drawText(subRect, Qt::AlignHCenter, tr("High-Performance Modern Minecraft Client"));
 
-        painter.setPen(foreground);
-        painter.setFont(font);
-        painter.drawText(textRect, Qt::AlignHCenter | Qt::TextWordWrap, emptyString);
+        // Call to action
+        QFont ctaFont("sans", 10);
+        ctaFont.setBold(true);
+        painter.setFont(ctaFont);
+        painter.setPen(QColor(57, 255, 20));
+        QRect ctaRect(cardRect.left() + 20, cardRect.top() + 104, cardRect.width() - 40, 26);
+        painter.drawText(ctaRect, Qt::AlignHCenter, tr("Click \"+ New Instance\" on the left navigation to get started."));
 
         painter.restore();
         return;

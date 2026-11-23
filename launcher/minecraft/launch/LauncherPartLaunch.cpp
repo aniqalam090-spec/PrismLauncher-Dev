@@ -43,6 +43,15 @@
 #include "launch/LaunchTask.h"
 #include "minecraft/MinecraftInstance.h"
 
+#if defined(Q_OS_WIN)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
+
+
 #if defined(Q_OS_LINUX) && defined(ENABLE_GAMEMODE)
 #include "gamemode_client.h"
 #endif
@@ -147,6 +156,17 @@ void LauncherPartLaunch::executeTask()
     } else {
         m_process.start(javaPath, args);
     }
+
+#if defined(Q_OS_WIN)
+    auto winPid = m_process.processId();
+    if (winPid != 0) {
+        HANDLE hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, static_cast<DWORD>(winPid));
+        if (hProcess) {
+            SetPriorityClass(hProcess, HIGH_PRIORITY_CLASS);
+            CloseHandle(hProcess);
+        }
+    }
+#endif
 
 #if defined(Q_OS_LINUX) && defined(ENABLE_GAMEMODE)
     if (instance->settings()->get("EnableFeralGamemode").toBool() && APPLICATION->capabilities() & Application::SupportsGameMode) {

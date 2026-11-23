@@ -32,10 +32,13 @@
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QToolBar" name="mainToolBar">
    <property name="windowTitle">
-    <string>Main Toolbar</string>
+    <string>Navigation</string>
    </property>
    <property name="allowedAreas">
-    <set>Qt::ToolBarArea::BottomToolBarArea|Qt::ToolBarArea::TopToolBarArea</set>
+    <set>Qt::ToolBarArea::AllToolBarAreas</set>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Orientation::Vertical</enum>
    </property>
    <property name="toolButtonStyle">
     <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
@@ -43,8 +46,11 @@
    <property name="floatable">
     <bool>false</bool>
    </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
    <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
+    <enum>LeftToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
@@ -55,57 +61,32 @@
    <addaction name="actionSettings"/>
    <addaction name="actionHelpButton"/>
    <addaction name="actionCheckUpdate"/>
-   <addaction name="actionCAT"/>
    <addaction name="actionAccountsButton"/>
-  </widget>
-  <widget class="QToolBar" name="newsToolBar">
-   <property name="windowTitle">
-    <string>News Toolbar</string>
-   </property>
-   <property name="allowedAreas">
-    <set>Qt::ToolBarArea::BottomToolBarArea|Qt::ToolBarArea::TopToolBarArea</set>
-   </property>
-   <property name="iconSize">
-    <size>
-     <width>16</width>
-     <height>16</height>
-    </size>
-   </property>
-   <property name="toolButtonStyle">
-    <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
-   </property>
-   <property name="floatable">
-    <bool>false</bool>
-   </property>
-   <attribute name="toolBarArea">
-    <enum>BottomToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
-   <addaction name="actionMoreNews"/>
   </widget>
   <widget class="WideBar" name="instanceToolBar">
    <property name="windowTitle">
-    <string>Instance Toolbar</string>
+    <string>Launch Dock</string>
    </property>
    <property name="iconSize">
     <size>
-     <width>16</width>
-     <height>16</height>
+     <width>18</width>
+     <height>18</height>
     </size>
    </property>
    <property name="toolButtonStyle">
     <enum>Qt::ToolButtonStyle::ToolButtonTextBesideIcon</enum>
    </property>
    <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <property name="movable">
     <bool>false</bool>
    </property>
    <property name="useDefaultAction" stdset="0">
     <bool>true</bool>
    </property>
    <attribute name="toolBarArea">
-    <enum>RightToolBarArea</enum>
+    <enum>BottomToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
